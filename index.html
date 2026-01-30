@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✨ 我的工具箱</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #4361ee, #3a0ca3);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 1.1rem;
+    }
+
+    .tool-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .tool-card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tool-card h2::before {
+      content: "🔧";
+      font-size: 1.2em;
+    }
+
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    input, button {
+      padding: 10px 16px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    button {
+      background: #4361ee;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #3a56d4;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding: 14px;
+      background: #f8fafc;
+      border-left: 4px solid #4361ee;
+      border-radius: 8px;
+      font-family: monospace;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 12px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .tool-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>我的工具箱</h1>
+      <p class="subtitle">轻量 · 实用 · 无广告</p>
+    </header>
+
+    <!-- 工具 1：Base64 编解码 -->
+    <div class="tool-card">
+      <h2>Base64 编解码</h2>
+      <div class="input-group">
+        <input type="text" id="base64Input" placeholder="输入文字或 Base64 字符串" />
+        <button onclick="handleBase64()">处理</button>
+      </div>
+      <div id="base64Result" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- 工具 2：时间戳转换 -->
+    <div class="tool-card">
+      <h2>时间戳转换</h2>
+      <div class="input-group">
+        <input type="number" id="timestampInput" placeholder="输入时间戳（秒）" />
+        <button onclick="convertTimestamp()">转换</button>
+      </div>
+      <div id="timestampResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- 工具 3：随机密码生成 -->
+    <div class="tool-card">
+      <h2>随机密码生成</h2>
+      <div class="input-group">
+        <input type="number" id="pwdLength" value="12" min="6" max="32" />
+        <button onclick="generatePassword()">生成密码</button>
+      </div>
+      <div id="passwordResult" class="result" style="display:none;"></div>
+    </div>
+
+    <footer>
+      Made with ❤️ | 部署于 GitHub Pages
+    </footer>
+  </div>
+
+  <script>
+    // Base64 编解码
+    function handleBase64() {
+      const input = document.getElementById('base64Input').value.trim();
+      const resultEl = document.getElementById('base64Result');
+      if (!input) return;
+      try {
+        // 尝试解码（如果是 Base64）
+        const decoded = decodeURIComponent(escape(atob(input)));
+        resultEl.innerText = `解码结果:\n${decoded}`;
+      } catch (e) {
+        // 否则编码
+        const encoded = btoa(unescape(encodeURIComponent(input)));
+        resultEl.innerText = `编码结果:\n${encoded}`;
+      }
+      resultEl.style.display = 'block';
+    }
+
+    // 时间戳转日期
+    function convertTimestamp() {
+      const ts = parseInt(document.getElementById('timestampInput').value);
+      const resultEl = document.getElementById('timestampResult');
+      if (!ts) return;
+      const date = new Date(ts * 1000);
+      resultEl.innerText = date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      resultEl.style.display = 'block';
+    }
+
+    // 随机密码生成
+    function generatePassword() {
+      const length = parseInt(document.getElementById('pwdLength').value) || 12;
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+      let pwd = '';
+      for (let i = 0; i < length; i++) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('passwordResult').innerText = pwd;
+      document.getElementById('passwordResult').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
