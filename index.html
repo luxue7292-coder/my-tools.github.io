@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>✨ 我的工具箱</title>
+  <!-- 引入二维码生成库（从免费 CDN 加载，无需下载文件） -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -12,7 +14,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
       min-height: 100vh;
       padding: 30px 20px;
@@ -44,6 +46,7 @@
       gap: 8px;
       margin-bottom: 24px;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .tab-btn {
@@ -123,6 +126,11 @@
       word-break: break-all;
     }
 
+    #qrcode {
+      margin: 15px 0;
+      text-align: center;
+    }
+
     footer {
       text-align: center;
       margin-top: 40px;
@@ -138,6 +146,12 @@
       h1 {
         font-size: 1.8rem;
       }
+      .input-group {
+        flex-direction: column;
+      }
+      input, button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -147,7 +161,7 @@
       <h1>我的工具箱</h1>
     </header>
 
-    <!-- 页签 -->
+    <!-- 页签按钮 -->
     <div class="tabs">
       <button class="tab-btn active" onclick="openTab('encode')">生码工具</button>
       <button class="tab-btn" onclick="openTab('decode')">解码工具</button>
@@ -157,13 +171,16 @@
     <!-- 生码工具 -->
     <div id="encode" class="tab-content active">
       <div class="tool-card">
-        <h2>二维码生成（示例）</h2>
-        <p>注：GitHub Pages 不支持后端，无法直接生成图片。以下为模拟演示。</p>
+        <h2>二维码生成器</h2>
+        <p>输入网址或文字，生成可扫码的二维码</p>
         <div class="input-group">
-          <input type="text" id="qrText" placeholder="输入文字生成二维码（模拟）" />
-          <button onclick="simulateQR()">生成</button>
+          <input type="text" id="qrTextInput" placeholder="例如：https://github.com" value="https://luxue7292-coder.github.io" />
+          <button onclick="generateQR()">生成二维码</button>
         </div>
-        <div id="qrResult" class="result" style="display:none;">[模拟] 二维码已生成（实际需调用 API）</div>
+        <div id="qrcode"></div>
+        <div style="text-align: center; margin-top: 15px;">
+          <button onclick="downloadQR()" id="downloadBtn" disabled>⬇️ 下载二维码 (PNG)</button>
+        </div>
       </div>
 
       <div class="tool-card">
@@ -189,8 +206,9 @@
 
       <div class="tool-card">
         <h2>URL 解码</h2>
+        <p>解码 %E4%BD%A0%E5%A5%BD 这类编码</p>
         <div class="input-group">
-          <input type="text" id="urlDecodeInput" placeholder="输入 URL 编码字符串（如 %E4%BD%A0%E5%A5%BD）" />
+          <input type="text" id="urlDecodeInput" placeholder="如 %E4%BD%A0%E5%A5%BD" />
           <button onclick="doURLDecode()">解码</button>
         </div>
         <div id="urlDecodeResult" class="result" style="display:none;"></div>
@@ -200,15 +218,14 @@
     <!-- Excel 转 XMind -->
     <div id="excel" class="tab-content">
       <div class="tool-card">
-        <h2>Excel 转 XMind（说明）</h2>
-        <p>⚠️ 此功能需要后端处理（如 Python），但 GitHub Pages 仅支持静态网页。</p>
-        <p>✅ 你可以：</p>
+        <h2>Excel 转 XMind（在线版说明）</h2>
+        <p>⚠️ 当前 GitHub Pages 是静态网站，无法处理文件上传或运行 Python。</p>
+        <p>✅ 但你可以：</p>
         <ul style="margin: 12px 0 16px; padding-left: 20px;">
-          <li>下载 Excel 文件</li>
-          <li>使用本地工具转换（如 Python 脚本）</li>
-          <li>或将来部署到支持后端的平台（如 Vercel + Serverless）</li>
+          <li>使用本地 Python 脚本转换（我可提供）</li>
+          <li>或将来升级到 Vercel 支持在线转换</li>
         </ul>
-        <button onclick="alert('此功能需本地运行 Python 脚本实现，GitHub Pages 无法直接处理文件上传。')">了解详情</button>
+        <button onclick="alert('需要在线版？作者可帮你部署到 Vercel + Python 后端！')">了解在线方案</button>
       </div>
     </div>
 
@@ -217,56 +234,85 @@
     </footer>
   </div>
 
+  <!-- 所有交互逻辑都在这里 -->
   <script>
-    // 切换页签
+    // ========== 页签切换功能 ==========
     function openTab(tabName) {
-      // 隐藏所有内容
+      // 隐藏所有内容区域
       document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.remove('active');
       });
-      // 移除按钮激活状态
+      // 移除所有按钮的“激活”状态
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
       });
-      // 显示选中内容
+      // 显示选中的内容区域
       document.getElementById(tabName).classList.add('active');
-      // 激活对应按钮
+      // 激活对应的按钮
       event.target.classList.add('active');
     }
 
-    // 模拟二维码生成
-    function simulateQR() {
-      const text = document.getElementById('qrText').value.trim();
-      const res = document.getElementById('qrResult');
-      if (text) {
-        res.style.display = 'block';
-      } else {
-        res.style.display = 'none';
+    // ========== 二维码生成功能 ==========
+    let qrCanvas = null; // 保存生成的二维码图片（用于下载）
+
+    function generateQR() {
+      const text = document.getElementById('qrTextInput').value.trim();
+      if (!text) {
+        alert('请输入内容！');
+        return;
       }
+
+      // 清空之前的二维码
+      const container = document.getElementById('qrcode');
+      container.innerHTML = '';
+
+      // 使用 qrcode.js 库生成二维码
+      const qr = qrcode(0, 'M'); // 参数：版本(0=自动), 纠错级别(M=中等)
+      qr.addData(text);
+      qr.make();
+
+      // 生成 Canvas 图片（支持下载）
+      qrCanvas = qr.createCanvas();
+      container.appendChild(qrCanvas);
+
+      // 启用下载按钮
+      document.getElementById('downloadBtn').disabled = false;
     }
 
-    // Base64 编码
+    function downloadQR() {
+      if (!qrCanvas) return;
+
+      // 创建一个临时下载链接
+      const link = document.createElement('a');
+      link.download = 'qrcode.png'; // 下载的文件名
+      link.href = qrCanvas.toDataURL('image/png'); // 把 Canvas 转为 PNG 数据
+      link.click(); // 自动触发下载
+    }
+
+    // ========== Base64 编码 ==========
     function doEncode() {
       const input = document.getElementById('encodeInput').value.trim();
       const res = document.getElementById('encodeResult');
       if (input) {
         try {
+          // 先处理中文，再 Base64 编码
           const encoded = btoa(unescape(encodeURIComponent(input)));
           res.innerText = encoded;
           res.style.display = 'block';
         } catch (e) {
-          res.innerText = '编码失败';
+          res.innerText = '编码失败，请检查输入';
           res.style.display = 'block';
         }
       }
     }
 
-    // Base64 解码
+    // ========== Base64 解码 ==========
     function doDecode() {
       const input = document.getElementById('decodeInput').value.trim();
       const res = document.getElementById('decodeResult');
       if (input) {
         try {
+          // 先 Base64 解码，再还原中文
           const decoded = decodeURIComponent(escape(atob(input)));
           res.innerText = decoded;
           res.style.display = 'block';
@@ -277,7 +323,7 @@
       }
     }
 
-    // URL 解码
+    // ========== URL 解码 ==========
     function doURLDecode() {
       const input = document.getElementById('urlDecodeInput').value.trim();
       const res = document.getElementById('urlDecodeResult');
@@ -287,7 +333,7 @@
           res.innerText = decoded;
           res.style.display = 'block';
         } catch (e) {
-          res.innerText = '无效的 URL 编码';
+          res.innerText = '无效的 URL 编码格式';
           res.style.display = 'block';
         }
       }
