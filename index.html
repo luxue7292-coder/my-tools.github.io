@@ -12,10 +12,10 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
       min-height: 100vh;
-      padding: 40px 20px;
+      padding: 30px 20px;
       color: #333;
     }
 
@@ -26,22 +26,50 @@
 
     header {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
 
     h1 {
-      font-size: 2.4rem;
+      font-size: 2.2rem;
       font-weight: 700;
       background: linear-gradient(90deg, #4361ee, #3a0ca3);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      margin-bottom: 10px;
     }
 
-    .subtitle {
-      color: #6b7280;
-      font-size: 1.1rem;
+    /* 页签样式 */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #4b5563;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .tab-btn.active {
+      background: #4361ee;
+      color: white;
+      box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
     }
 
     .tool-card {
@@ -50,26 +78,6 @@
       padding: 24px;
       margin-bottom: 24px;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .tool-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-    }
-
-    .tool-card h2 {
-      font-size: 1.4rem;
-      margin-bottom: 16px;
-      color: #2d3748;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .tool-card h2::before {
-      content: "🔧";
-      font-size: 1.2em;
     }
 
     .input-group {
@@ -79,14 +87,14 @@
       margin: 12px 0;
     }
 
-    input, button {
+    input, button, textarea {
       padding: 10px 16px;
       border: 1px solid #ddd;
       border-radius: 10px;
       font-size: 1rem;
     }
 
-    input {
+    input, textarea {
       flex: 1;
       min-width: 200px;
     }
@@ -111,8 +119,8 @@
       border-left: 4px solid #4361ee;
       border-radius: 8px;
       font-family: monospace;
-      word-break: break-all;
       white-space: pre-wrap;
+      word-break: break-all;
     }
 
     footer {
@@ -123,14 +131,12 @@
     }
 
     @media (max-width: 600px) {
-      body {
-        padding: 20px 12px;
+      .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.95rem;
       }
       h1 {
         font-size: 1.8rem;
-      }
-      .tool-card {
-        padding: 20px;
       }
     }
   </style>
@@ -139,37 +145,71 @@
   <div class="container">
     <header>
       <h1>我的工具箱</h1>
-      <p class="subtitle">轻量 · 实用 · 无广告</p>
     </header>
 
-    <!-- 工具 1：Base64 编解码 -->
-    <div class="tool-card">
-      <h2>Base64 编解码</h2>
-      <div class="input-group">
-        <input type="text" id="base64Input" placeholder="输入文字或 Base64 字符串" />
-        <button onclick="handleBase64()">处理</button>
-      </div>
-      <div id="base64Result" class="result" style="display:none;"></div>
+    <!-- 页签 -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openTab('encode')">生码工具</button>
+      <button class="tab-btn" onclick="openTab('decode')">解码工具</button>
+      <button class="tab-btn" onclick="openTab('excel')">Excel 转 XMind</button>
     </div>
 
-    <!-- 工具 2：时间戳转换 -->
-    <div class="tool-card">
-      <h2>时间戳转换</h2>
-      <div class="input-group">
-        <input type="number" id="timestampInput" placeholder="输入时间戳（秒）" />
-        <button onclick="convertTimestamp()">转换</button>
+    <!-- 生码工具 -->
+    <div id="encode" class="tab-content active">
+      <div class="tool-card">
+        <h2>二维码生成（示例）</h2>
+        <p>注：GitHub Pages 不支持后端，无法直接生成图片。以下为模拟演示。</p>
+        <div class="input-group">
+          <input type="text" id="qrText" placeholder="输入文字生成二维码（模拟）" />
+          <button onclick="simulateQR()">生成</button>
+        </div>
+        <div id="qrResult" class="result" style="display:none;">[模拟] 二维码已生成（实际需调用 API）</div>
       </div>
-      <div id="timestampResult" class="result" style="display:none;"></div>
+
+      <div class="tool-card">
+        <h2>Base64 编码</h2>
+        <div class="input-group">
+          <input type="text" id="encodeInput" placeholder="输入文字进行 Base64 编码" />
+          <button onclick="doEncode()">编码</button>
+        </div>
+        <div id="encodeResult" class="result" style="display:none;"></div>
+      </div>
     </div>
 
-    <!-- 工具 3：随机密码生成 -->
-    <div class="tool-card">
-      <h2>随机密码生成</h2>
-      <div class="input-group">
-        <input type="number" id="pwdLength" value="12" min="6" max="32" />
-        <button onclick="generatePassword()">生成密码</button>
+    <!-- 解码工具 -->
+    <div id="decode" class="tab-content">
+      <div class="tool-card">
+        <h2>Base64 解码</h2>
+        <div class="input-group">
+          <input type="text" id="decodeInput" placeholder="输入 Base64 字符串" />
+          <button onclick="doDecode()">解码</button>
+        </div>
+        <div id="decodeResult" class="result" style="display:none;"></div>
       </div>
-      <div id="passwordResult" class="result" style="display:none;"></div>
+
+      <div class="tool-card">
+        <h2>URL 解码</h2>
+        <div class="input-group">
+          <input type="text" id="urlDecodeInput" placeholder="输入 URL 编码字符串（如 %E4%BD%A0%E5%A5%BD）" />
+          <button onclick="doURLDecode()">解码</button>
+        </div>
+        <div id="urlDecodeResult" class="result" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Excel 转 XMind -->
+    <div id="excel" class="tab-content">
+      <div class="tool-card">
+        <h2>Excel 转 XMind（说明）</h2>
+        <p>⚠️ 此功能需要后端处理（如 Python），但 GitHub Pages 仅支持静态网页。</p>
+        <p>✅ 你可以：</p>
+        <ul style="margin: 12px 0 16px; padding-left: 20px;">
+          <li>下载 Excel 文件</li>
+          <li>使用本地工具转换（如 Python 脚本）</li>
+          <li>或将来部署到支持后端的平台（如 Vercel + Serverless）</li>
+        </ul>
+        <button onclick="alert('此功能需本地运行 Python 脚本实现，GitHub Pages 无法直接处理文件上传。')">了解详情</button>
+      </div>
     </div>
 
     <footer>
@@ -178,51 +218,79 @@
   </div>
 
   <script>
-    // Base64 编解码
-    function handleBase64() {
-      const input = document.getElementById('base64Input').value.trim();
-      const resultEl = document.getElementById('base64Result');
-      if (!input) return;
-      try {
-        // 尝试解码（如果是 Base64）
-        const decoded = decodeURIComponent(escape(atob(input)));
-        resultEl.innerText = `解码结果:\n${decoded}`;
-      } catch (e) {
-        // 否则编码
-        const encoded = btoa(unescape(encodeURIComponent(input)));
-        resultEl.innerText = `编码结果:\n${encoded}`;
-      }
-      resultEl.style.display = 'block';
-    }
-
-    // 时间戳转日期
-    function convertTimestamp() {
-      const ts = parseInt(document.getElementById('timestampInput').value);
-      const resultEl = document.getElementById('timestampResult');
-      if (!ts) return;
-      const date = new Date(ts * 1000);
-      resultEl.innerText = date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+    // 切换页签
+    function openTab(tabName) {
+      // 隐藏所有内容
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
       });
-      resultEl.style.display = 'block';
+      // 移除按钮激活状态
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      // 显示选中内容
+      document.getElementById(tabName).classList.add('active');
+      // 激活对应按钮
+      event.target.classList.add('active');
     }
 
-    // 随机密码生成
-    function generatePassword() {
-      const length = parseInt(document.getElementById('pwdLength').value) || 12;
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-      let pwd = '';
-      for (let i = 0; i < length; i++) {
-        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    // 模拟二维码生成
+    function simulateQR() {
+      const text = document.getElementById('qrText').value.trim();
+      const res = document.getElementById('qrResult');
+      if (text) {
+        res.style.display = 'block';
+      } else {
+        res.style.display = 'none';
       }
-      document.getElementById('passwordResult').innerText = pwd;
-      document.getElementById('passwordResult').style.display = 'block';
+    }
+
+    // Base64 编码
+    function doEncode() {
+      const input = document.getElementById('encodeInput').value.trim();
+      const res = document.getElementById('encodeResult');
+      if (input) {
+        try {
+          const encoded = btoa(unescape(encodeURIComponent(input)));
+          res.innerText = encoded;
+          res.style.display = 'block';
+        } catch (e) {
+          res.innerText = '编码失败';
+          res.style.display = 'block';
+        }
+      }
+    }
+
+    // Base64 解码
+    function doDecode() {
+      const input = document.getElementById('decodeInput').value.trim();
+      const res = document.getElementById('decodeResult');
+      if (input) {
+        try {
+          const decoded = decodeURIComponent(escape(atob(input)));
+          res.innerText = decoded;
+          res.style.display = 'block';
+        } catch (e) {
+          res.innerText = '无效的 Base64 字符串';
+          res.style.display = 'block';
+        }
+      }
+    }
+
+    // URL 解码
+    function doURLDecode() {
+      const input = document.getElementById('urlDecodeInput').value.trim();
+      const res = document.getElementById('urlDecodeResult');
+      if (input) {
+        try {
+          const decoded = decodeURIComponent(input);
+          res.innerText = decoded;
+          res.style.display = 'block';
+        } catch (e) {
+          res.innerText = '无效的 URL 编码';
+          res.style.display = 'block';
+        }
+      }
     }
   </script>
 </body>
