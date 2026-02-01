@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>✨ 我的工具箱</title>
-  <!-- 引入二维码生成库（从免费 CDN 加载，无需下载文件） -->
+  <!-- 引入二维码生成库（免费 CDN，无需下载） -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <style>
     * {
@@ -126,9 +126,19 @@
       word-break: break-all;
     }
 
-    #qrcode {
-      margin: 15px 0;
+    #qrcodePreview {
       text-align: center;
+      margin: 20px 0;
+      display: none;
+    }
+
+    #qrcode {
+      display: inline-block;
+      padding: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     footer {
@@ -172,14 +182,24 @@
     <div id="encode" class="tab-content active">
       <div class="tool-card">
         <h2>二维码生成器</h2>
-        <p>输入网址或文字，生成可扫码的二维码</p>
+        <p>输入网址或文字，立即生成可扫码的二维码</p>
         <div class="input-group">
           <input type="text" id="qrTextInput" placeholder="例如：https://github.com" value="https://luxue7292-coder.github.io" />
           <button onclick="generateQR()">生成二维码</button>
         </div>
-        <div id="qrcode"></div>
+
+        <!-- 二维码预览区（加强版） -->
+        <div id="qrcodePreview">
+          <p style="margin-bottom: 8px; color: #4b5563;">👇 扫码预览 👇</p>
+          <div id="qrcode"></div>
+          <p style="margin-top: 12px; font-size: 0.9rem; color: #718096;">
+            💡 提示：在电脑上可<strong>右键图片 → 另存为</strong>保存二维码
+          </p>
+        </div>
+
+        <!-- 下载按钮 -->
         <div style="text-align: center; margin-top: 15px;">
-          <button onclick="downloadQR()" id="downloadBtn" disabled>⬇️ 下载二维码 (PNG)</button>
+          <button onclick="downloadQR()" id="downloadBtn" disabled style="opacity: 0.6;">⬇️ 下载二维码 (PNG)</button>
         </div>
       </div>
 
@@ -234,26 +254,18 @@
     </footer>
   </div>
 
-  <!-- 所有交互逻辑都在这里 -->
+  <!-- 所有交互逻辑 -->
   <script>
-    // ========== 页签切换功能 ==========
+    // ========== 页签切换 ==========
     function openTab(tabName) {
-      // 隐藏所有内容区域
-      document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.remove('active');
-      });
-      // 移除所有按钮的“激活”状态
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      // 显示选中的内容区域
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById(tabName).classList.add('active');
-      // 激活对应的按钮
       event.target.classList.add('active');
     }
 
-    // ========== 二维码生成功能 ==========
-    let qrCanvas = null; // 保存生成的二维码图片（用于下载）
+    // ========== 二维码生成（修复下载问题） ==========
+    let qrCanvas = null;
 
     function generateQR() {
       const text = document.getElementById('qrTextInput').value.trim();
@@ -262,31 +274,47 @@
         return;
       }
 
-      // 清空之前的二维码
+      const preview = document.getElementById('qrcodePreview');
       const container = document.getElementById('qrcode');
       container.innerHTML = '';
+      preview.style.display = 'block';
 
-      // 使用 qrcode.js 库生成二维码
-      const qr = qrcode(0, 'M'); // 参数：版本(0=自动), 纠错级别(M=中等)
+      const qr = qrcode(0, 'M');
       qr.addData(text);
       qr.make();
 
-      // 生成 Canvas 图片（支持下载）
       qrCanvas = qr.createCanvas();
       container.appendChild(qrCanvas);
 
-      // 启用下载按钮
-      document.getElementById('downloadBtn').disabled = false;
+      const btn = document.getElementById('downloadBtn');
+      btn.disabled = false;
+      btn.style.opacity = '1';
     }
 
     function downloadQR() {
-      if (!qrCanvas) return;
+      if (!qrCanvas) {
+        alert('请先生成二维码！');
+        return;
+      }
 
-      // 创建一个临时下载链接
-      const link = document.createElement('a');
-      link.download = 'qrcode.png'; // 下载的文件名
-      link.href = qrCanvas.toDataURL('image/png'); // 把 Canvas 转为 PNG 数据
-      link.click(); // 自动触发下载
+      try {
+        const dataUrl = qrCanvas.toDataURL('image/png');
+
+        // 方法1：创建临时链接并点击（兼容大多数浏览器）
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'qrcode.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        // 方法2：失败时打开新窗口，提示用户手动保存
+        alert('即将打开二维码图片，请右键 → “另存为”保存到本地');
+        const win = window.open(dataUrl, '_blank');
+        if (!win) {
+          alert('弹出窗口被浏览器阻止，请允许后重试');
+        }
+      }
     }
 
     // ========== Base64 编码 ==========
@@ -295,12 +323,11 @@
       const res = document.getElementById('encodeResult');
       if (input) {
         try {
-          // 先处理中文，再 Base64 编码
           const encoded = btoa(unescape(encodeURIComponent(input)));
           res.innerText = encoded;
           res.style.display = 'block';
         } catch (e) {
-          res.innerText = '编码失败，请检查输入';
+          res.innerText = '编码失败';
           res.style.display = 'block';
         }
       }
@@ -312,7 +339,6 @@
       const res = document.getElementById('decodeResult');
       if (input) {
         try {
-          // 先 Base64 解码，再还原中文
           const decoded = decodeURIComponent(escape(atob(input)));
           res.innerText = decoded;
           res.style.display = 'block';
@@ -333,7 +359,7 @@
           res.innerText = decoded;
           res.style.display = 'block';
         } catch (e) {
-          res.innerText = '无效的 URL 编码格式';
+          res.innerText = '无效的 URL 编码';
           res.style.display = 'block';
         }
       }
